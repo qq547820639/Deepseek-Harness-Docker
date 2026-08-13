@@ -6,6 +6,9 @@
 # 运行时上传目录（工作目录内的 attachments/，与容器双向直通）
 attachments/
 
+# 凭据/系统数据目录（含 API Key 等敏感信息，绝不入库）
+dsh-data/
+
 # 系统/编辑器
 .DS_Store
 .idea/
