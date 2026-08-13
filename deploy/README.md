@@ -1,5 +1,9 @@
 # DeepSeek Harness 本地容器化部署 Runbook（实测验证版）
 
+> 本目录为仓库的部署配置。构建上下文（build context）为**仓库根目录**（即 `deploy/` 的上一级），
+> 因此 `Dockerfile` 中 `COPY repo/ /app/` 能正确取到 `../repo` 源码。
+> 根目录说明见 [../README.md](../README.md)。
+
 > 结论：**可以**。本方案已在 macOS + Colima（vz 虚拟化）上端到端实测通过：
 > Web UI 可达、Landlock 沙箱强制生效、mock 模型驱动 agent 经沙箱成功执行命令。
 > 验证时间：2026-08-13；仓库 HEAD：`47f9438`；npm 包版本：`0.1.0-rc.6`。
