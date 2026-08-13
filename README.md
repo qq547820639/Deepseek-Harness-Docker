@@ -1,50 +1,84 @@
 # DeepSeek Harness Docker
 
-将 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 容器化部署的封装仓库。
+在你自己电脑上，开箱即用地跑起一个由 DeepSeek 驱动的 AI 助手。
 
-本仓库把官方 `repo/` 源码与 `deploy/` 部署配置打包在一起，提供开箱即用的 Docker 镜像构建与本地容器运行方案（已在 macOS + Colima vz 实测通过：Web UI 可达、Landlock 沙箱强制生效、mock 模型驱动 agent 经沙箱成功执行命令）。
+## 这是什么？
 
-## 仓库结构
+一句话：**把 DeepSeek 的 AI 能力装进一个「小房间」里，让你在自己的电脑上就能用。**
 
-```
-.
-├── deploy/            # 部署配置（详见 deploy/README.md）
-│   ├── Dockerfile          # 源码多阶段构建（build 阶段含编译工具链 + landlock-run 原生编译）
-│   ├── Dockerfile.npm      # 快速路径：npm 装 @deepseek-ai/dsh
-│   ├── docker-compose.yml  # 单机编排（context = 仓库根）
-│   ├── files/              # 容器内运行期文件：entrypoint.sh + relay.mjs（中继）
-│   └── verify/             # 端到端验证套件：mock-llm.mjs / settings.mock.yaml / verify.sh
-└── repo/               # DeepSeek Harness 官方源码（作为构建上下文被 COPY 进镜像）
-```
+这里说的「小房间」，指的是 Docker 容器——你可以把它想象成一个独立的、与外界隔离的虚拟环境。这个项目做的事，就是帮你把这个环境准备好、配好，让 DeepSeek 的 AI 助手能在一个网页里跟你对话、帮你做事。
 
-> `repo/` 为官方源码快照，作为普通目录提交（非 submodule），clone 即用、构建简单。
+## 它解决什么问题？
 
-## 快速开始
+很多人想用 AI 助手帮忙处理本地文件、跑程序、自动完成一些重复工作，但又担心：
 
-```sh
-# 快速路径（推荐起步）
-docker build -f deploy/Dockerfile.npm -t dsh:0.1.0-rc.6-npm .
+- 装环境太麻烦，各种依赖、版本搞得头大；
+- 让 AI 直接操作自己的电脑，心里没底，怕它误删文件、乱装东西。
 
-# 启动
-export DSH_WORKSPACE=/path/to/your-project
-docker compose -f deploy/docker-compose.yml up -d --build
+这个项目同时解决这两点：
 
-# 验证 Web 可达
-curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3080/   # 200
-```
+- **装得简单**：几条命令就能跑起来，环境已经帮你打包好了；
+- **用着放心**：AI 在一个「沙箱」里工作（沙箱好比一个带护栏的游乐场，AI 只能在里面活动，够不着护栏外的文件），重要操作还会先征求你的同意。
 
-浏览器打开 http://127.0.0.1:3080 → Settings → Models 填 DeepSeek API Key。
+## 核心功能亮点
 
-## 文档
+- **网页界面，即开即用**：跑起来后，浏览器打开一个地址，就能像聊天一样跟 AI 对话。
+- **能动手，不只是动嘴**：AI 不只是回答问题，还能真正帮你执行命令、读写文件、跑程序。
+- **沙箱保护，安心使用**：AI 的所有动作都被限制在安全范围内，关键操作需要你点头才执行。
+- **两种装法，按需选择**：想快速体验有一条「省心路」，想从源码自己定制也有一条「进阶路」。
+- **无需真实密钥也能先试**：项目自带一套「模拟模式」，不花钱、不注册，就能先跑通全流程看看效果。
 
-- [部署 Runbook（实测验证版）](deploy/README.md) — 镜像构建、本地容器运行时、配置与数据、升级回滚、沙箱兜底、风险清单。
-- 端到端验证（无需真实 API Key）：`./deploy/verify/verify.sh`
+## 快速上手
+
+三步，大约几分钟：
+
+1. **构建镜像**（把环境准备好）：
+
+   ```sh
+   docker build -f deploy/Dockerfile.npm -t dsh:0.1.0-rc.6-npm .
+   ```
+
+2. **启动服务**（把你电脑上的某个文件夹交给 AI 使用）：
+
+   ```sh
+   export DSH_WORKSPACE=/你/想/交给AI的文件夹
+   docker compose -f deploy/docker-compose.yml up -d --build
+   ```
+
+3. **打开网页**：浏览器访问 `http://127.0.0.1:3080`，在设置里填入你的 DeepSeek API Key，就可以开始对话了。
+
+> 更详细的安装说明（含 macOS 无 Docker Desktop 时的完整步骤），见 [部署 Runbook](deploy/README.md)。
+
+## 常见使用场景
+
+- **整理本地文件**：让 AI 帮你批量重命名、分类、查找某个文件里的内容。
+- **写代码、改 Bug**：把代码文件夹交给它，让它帮你分析、修改、运行测试。
+- **自动化重复工作**：把每天都要手动做的琐碎操作，交给 AI 按步骤自动完成。
+- **学习与试验**：在沙箱里放心地让 AI 尝试各种操作，不用怕搞坏自己的电脑。
+
+## 常见问题（FAQ）
+
+**问：我需要会编程才能用吗？**
+答：上手部分只需要会复制粘贴命令、会用浏览器即可。涉及写代码的场景才需要一些编程知识。
+
+**问：AI 会不会误删我的文件？**
+答：它工作在沙箱里，并且关键操作会先向你确认。你只把你愿意交给它的文件夹挂载给它，其他文件它够不着。
+
+**问：一定要有 DeepSeek API Key 吗？**
+答：正常使用需要。但项目自带了「模拟模式」（`./deploy/verify/verify.sh`），不需要真实密钥就能先跑通、验证环境是否正常。
+
+**问：怎么知道服务是否正常？**
+答：浏览器打开 `http://127.0.0.1:3080` 能看到页面、返回 200，就说明启动成功了。
+
+**问：想升级到新版本怎么办？**
+答：按新的版本号重新构建镜像、重新启动即可，旧版本的数据会保留。详见 [部署 Runbook](deploy/README.md) 的「升级与回滚」一节。
+
+## 获取帮助与支持
+
+- **详细技术文档**：[deploy/README.md](deploy/README.md) —— 涵盖构建、配置、升级、故障排查等完整说明。
+- **上游项目**：[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) —— 本项目的核心能力来源。
+- **问题反馈**：欢迎在仓库提 Issue 描述你遇到的问题。
 
 ## 许可
 
-本仓库部署配置（`deploy/`、`README.md`、`.gitignore`）以 [MIT License](LICENSE) 发布；
-`repo/` 内上游源码沿用其原有 MIT 许可（Copyright (c) 2026 DeepSeek）。
-
-## 本地运行产物
-
-`.workbuddy/`、`.verify-data/`、`.cache/` 等本机运行产物不入库（见 `.gitignore`）。
+本仓库的部署配置以 [MIT License](LICENSE) 发布；`repo/` 内的上游源码沿用其原有 MIT 许可（Copyright (c) 2026 DeepSeek）。
