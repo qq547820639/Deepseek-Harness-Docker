@@ -12,8 +12,8 @@ services:
     ports:
       - "127.0.0.1:3080:3080"
     volumes:
-      # /data: 系统数据（settings/凭据），宿主机目录直通；默认放本仓库内（已被 .gitignore 排除）
-      - ${DSH_DATA:-../dsh-data}:/data
+      # /data: 系统数据（settings/凭据），宿主机目录直通（用户指定放 CodeProj 内）
+      - ${DSH_DATA:-/Volumes/Extra/CodeProj/dsh-data}:/data
       # /workspace: agent 工作目录（代码根，其下新建项目容器内立即可见）
       - ${DSH_WORKSPACE:-../workspace}:/workspace
       # 上传目录 = 工作目录本身（用户指定）：宿主机放进 CodeProj 的文件即上传目录内容
