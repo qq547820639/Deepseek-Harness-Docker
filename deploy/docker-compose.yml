@@ -12,9 +12,10 @@ services:
     ports:
       - "127.0.0.1:3080:3080"
     volumes:
-      # /data: 系统数据（settings/凭据），宿主机目录直通，放仓库外避免凭据暴露给 agent
-      - ${DSH_DATA:-/Volumes/Extra/CodeProj/dsh-data}:/data
-      # /workspace: agent 工作目录 = 本仓库
+      # /data: 系统数据（settings/凭据），宿主机目录直通
+      # 注意: 必须放在 DSH_WORKSPACE 之外，否则凭据(.credentials.yaml)会暴露给 agent
+      - ${DSH_DATA:-/Volumes/Extra/dsh-data}:/data
+      # /workspace: agent 工作目录（可指到代码根，如 /Volumes/Extra/CodeProj，其下新建项目容器内立即可见）
       - ${DSH_WORKSPACE:-../workspace}:/workspace
       # 上传目录挂进工作目录内（attachments/ 文件夹），UI 上传与宿主机放文件都在这一个目录
       - ${DSH_WORKSPACE:-../workspace}/attachments:/data/attachments/v1
