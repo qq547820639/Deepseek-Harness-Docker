@@ -1,0 +1,14 @@
+# 验证用 settings.yaml：把 mock 端点注册为模型服务商并设为默认模型
+# 写入容器的 $DSH_HOME/settings.yaml（= /data/settings.yaml）
+llm-pi-ai:
+  providers:
+    mock:
+      apiKeyEnv: MOCK_API_KEY
+      api: openai-completions
+      baseURL: http://mock-llm:18765/v1
+      models:
+        - id: mock-chat
+          contextWindow: 32000
+agent-default-model:
+  provider: mock
+  model: mock-chat

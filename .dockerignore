@@ -1,0 +1,6 @@
+.workbuddy
+repo/.git
+repo/node_modules
+deploy/verify
+**/*.log
+.DS_Store

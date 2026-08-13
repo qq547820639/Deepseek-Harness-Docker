@@ -1,0 +1,11 @@
+# 本地运行产物（含会话、存储、密钥等，不应入库）
+.workbuddy/
+.verify-data/
+.cache/
+
+# 系统/编辑器
+.DS_Store
+.idea/
+
+# 日志
+*.log

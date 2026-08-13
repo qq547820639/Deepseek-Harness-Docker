@@ -1,0 +1,52 @@
+# syntax=docker/dockerfile:1
+# =============================================================================
+# DeepSeek Harness (dsh) — 快速路径：直接使用 npm 官方发布包
+#
+# 构建（在 workspace 根目录执行，context = workspace 根）:
+#   docker build -f deploy/Dockerfile.npm -t dsh:0.1.0-rc.6-npm .
+#
+# 设计说明:
+# - dsh web 只绑定容器内 127.0.0.1:3080（官方安全设计，禁止 --host 0.0.0.0），
+#   由 relay.mjs 绑定容器 eth0 IP 中继，供 docker -p 端口映射接入
+#   （0.0.0.0 绑定会与 dsh 的 127.0.0.1 冲突，Linux 下 EADDRINUSE）。
+# - 不安装 curl/apt 包（Debian 官方源在部分网络不可达），健康检查用 node 内置 fetch。
+# - node-pty 等原生模块需本地编译，故先经镜像源安装 python3/make/g++ 再 npm install。
+# - npm 包 rc 版本也可能存在破坏性变更，勿用 latest。
+# =============================================================================
+
+FROM node:24-bookworm-slim
+
+ENV NODE_ENV=production \
+    DSH_HOME=/data
+
+# 精确锁定版本（当前 npm 最新: 0.1.0-rc.6），构建时请核实
+# 网络受限环境可用: docker build --build-arg NPM_REGISTRY=https://registry.npmmirror.com ...
+ARG DSH_VERSION=0.1.0-rc.6
+ARG NPM_REGISTRY=
+
+# Debian 源切镜像 + 编译工具链（node-pty 等原生模块的预编译产物托管在 GitHub，部分网络不可达）
+RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends python3 make g++ \
+ && if [ -n "$NPM_REGISTRY" ]; then npm config set registry "$NPM_REGISTRY"; fi \
+ && npm install -g "@deepseek-ai/dsh@${DSH_VERSION}" \
+ && apt-get remove -y python3 make g++ \
+ && apt-get autoremove -y \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd -r -u 10001 -d /data dsh \
+ && mkdir -p /data /workspace \
+ && chown -R dsh:dsh /data /workspace
+
+COPY deploy/files/relay.mjs deploy/files/entrypoint.sh /opt/dsh/
+RUN chmod +x /opt/dsh/entrypoint.sh
+
+USER dsh
+WORKDIR /workspace
+
+EXPOSE 3080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:3080/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+ENTRYPOINT ["/opt/dsh/entrypoint.sh", "dsh", "web"]
+CMD ["--port", "3080", "--trusted-host", "127.0.0.1:3080", "localhost:3080"]

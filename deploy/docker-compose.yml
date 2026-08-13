@@ -1,0 +1,39 @@
+# DeepSeek Harness 本地容器部署
+# 用法: export DSH_WORKSPACE=/path/to/your/project && docker compose -f deploy/docker-compose.yml up -d --build
+# 访问: http://127.0.0.1:3080
+services:
+  dsh:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: dsh:local
+    container_name: dsh
+    ports:
+      - "127.0.0.1:3080:3080"
+    volumes:
+      - dsh-data:/data
+      - ${DSH_WORKSPACE:-../workspace}:/workspace
+    environment:
+      - DSH_HOME=/data
+    restart: unless-stopped
+    # 健康检查由镜像内置 HEALTHCHECK 提供（node fetch，无 curl 依赖）
+    networks:
+      - dsh-net
+
+  # 端到端验证专用（--profile verify 时启动）：
+  # 提供 OpenAI 兼容 mock 端点，无需真实 API Key 即可验证「模型→工具→沙箱」链路
+  mock-llm:
+    image: node:24-bookworm-slim
+    profiles: ["verify"]
+    container_name: mock-llm
+    command: ["node", "/opt/mock-llm.mjs", "18765"]
+    volumes:
+      - ../deploy/verify/mock-llm.mjs:/opt/mock-llm.mjs:ro
+    networks:
+      - dsh-net
+
+volumes:
+  dsh-data:
+
+networks:
+  dsh-net:
