@@ -1,0 +1,7 @@
+# 快速路径覆盖：复用已构建验证的 npm 包镜像，跳过源码构建
+# 用法: export DSH_WORKSPACE=/path/to/your-project \
+#       docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.npm.yml up -d
+services:
+  dsh:
+    build: !reset null
+    image: dsh:0.1.0-rc.6-npm

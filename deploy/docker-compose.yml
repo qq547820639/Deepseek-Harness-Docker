@@ -1,6 +1,7 @@
 # DeepSeek Harness 本地容器部署
 # 用法: export DSH_WORKSPACE=/path/to/your/project && docker compose -f deploy/docker-compose.yml up -d --build
 # 访问: http://127.0.0.1:3080
+name: deepseek-harness
 services:
   dsh:
     build:
@@ -11,8 +12,12 @@ services:
     ports:
       - "127.0.0.1:3080:3080"
     volumes:
-      - dsh-data:/data
+      # /data: 系统数据（settings/凭据），宿主机目录直通，放仓库外避免凭据暴露给 agent
+      - ${DSH_DATA:-/Volumes/Extra/CodeProj/dsh-data}:/data
+      # /workspace: agent 工作目录 = 本仓库
       - ${DSH_WORKSPACE:-../workspace}:/workspace
+      # 上传目录挂进工作目录内（attachments/ 文件夹），UI 上传与宿主机放文件都在这一个目录
+      - ${DSH_WORKSPACE:-../workspace}/attachments:/data/attachments/v1
     environment:
       - DSH_HOME=/data
     restart: unless-stopped
@@ -31,9 +36,6 @@ services:
       - ../deploy/verify/mock-llm.mjs:/opt/mock-llm.mjs:ro
     networks:
       - dsh-net
-
-volumes:
-  dsh-data:
 
 networks:
   dsh-net:

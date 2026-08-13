@@ -3,6 +3,9 @@
 .verify-data/
 .cache/
 
+# 运行时上传目录（工作目录内的 attachments/，与容器双向直通）
+attachments/
+
 # 系统/编辑器
 .DS_Store
 .idea/

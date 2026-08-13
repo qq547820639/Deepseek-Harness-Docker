@@ -28,7 +28,8 @@
 |---|---|
 | `Dockerfile.npm` | 快速路径：npm 装 `@deepseek-ai/dsh`，推荐起步（实测验证通过） |
 | `Dockerfile` | 源码多阶段构建（build 阶段含编译工具链 + landlock-run 原生编译，实测验证通过） |
-| `docker-compose.yml` | 单机编排（`context: ..` = workspace 根；另有 verify profile 的 mock-llm 服务） |
+| `docker-compose.yml` | 单机编排（`context: ..` = workspace 根；`name: deepseek-harness` 固定项目名；另有 verify profile 的 mock-llm 服务） |
+| `docker-compose.npm.yml` | 覆盖文件：复用已构建的 npm 镜像、跳过源码构建（`build: !reset null`） |
 | `verify/` | 端到端验证套件（mock-llm.mjs / settings.mock.yaml / verify.sh） |
 | `files/` | entrypoint.sh + relay.mjs（容器内中继） |
 
@@ -73,9 +74,15 @@ printf '{\n  "registry-mirrors": ["https://docker.m.daocloud.io", "https://docke
 
 ## 4. 启动与验证
 
+> 若 `docker compose` 不可用（静态安装的 docker CLI 无插件），安装插件二进制到 `~/.docker/cli-plugins/docker-compose`：
+> `curl -fsSL https://gh-proxy.com/https://github.com/docker/compose/releases/download/v5.4.0/docker-compose-darwin-aarch64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose`
+
 ```sh
 # 启动（workspace 卷指向你要给 agent 用的项目目录）
 export DSH_WORKSPACE=/path/to/your-project
+# 快速路径：复用已验证 npm 镜像（不重新构建源码）
+docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.npm.yml up -d
+# 源码路径：--build 走多阶段源码构建
 docker compose -f deploy/docker-compose.yml up -d --build
 # 或纯 docker（等价）：
 docker run -d --name dsh -p 127.0.0.1:3080:3080 \
@@ -100,8 +107,10 @@ docker inspect --format '{{.State.Health.Status}}' dsh                   # healt
 ## 5. 配置与数据
 
 - **模型**：`/data/settings.yaml`（`llm-pi-ai.providers.*` + `agent-default-model`）；密钥经 `apiKeyEnv` 指向容器环境变量，不落明文（UI 填写的密钥存 `$DSH_HOME/.credentials.yaml`）。
+- **数据目录**：`/data` 为宿主机 bind 挂载（`${DSH_DATA:-/Volumes/Extra/CodeProj/dsh-data}`，可经环境变量改），存放 settings/凭据。**勿把 DSH_DATA 指向 agent 的 workspace 目录内**（凭据会被 agent 读到）。
+- **上传目录**：工作目录内的 `attachments/` 文件夹 ↔ 容器 `/data/attachments/v1`（UI 上传的附件、宿主机要交给 agent 的文件都放这里，双向直通）。
 - **权限策略**：`permission` 命名空间，预设 workspace-write（沙箱开+审批）与 danger-full-access（沙箱关+自动批准）。
-- **备份**：`docker run --rm -v deepseek-harness_dsh-data:/data -v $PWD:/backup alpine tar czf /backup/dsh-data.tgz -C /data .`
+- **备份**：`tar czf dsh-data.tgz -C /Volumes/Extra/CodeProj/dsh-data .`
 
 ## 6. 升级与回滚
 

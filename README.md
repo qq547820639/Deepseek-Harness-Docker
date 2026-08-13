@@ -42,10 +42,20 @@
 
    ```sh
    export DSH_WORKSPACE=/你/想/交给AI的文件夹
+   # 快速路径（复用已构建的镜像，无需重新编译，推荐）：
+   docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.npm.yml up -d
+   # 或源码路径（从源码完整构建）：
    docker compose -f deploy/docker-compose.yml up -d --build
    ```
 
 3. **打开网页**：浏览器访问 `http://127.0.0.1:3080`，在设置里填入你的 DeepSeek API Key，就可以开始对话了。
+
+## 怎么把文件交给 AI？
+
+两种方式，任选其一：
+
+- **网页里直接上传**：对话输入框旁上传附件即可；
+- **放进 attachments 文件夹**：启动后，工作目录里会自动有一个 `attachments/` 文件夹。你把文件拖进去，AI 立即可见；AI 上传的文件也会出现在这里。**宿主机和容器双向同步，这是最方便的大文件通道。**
 
 > 更详细的安装说明（含 macOS 无 Docker Desktop 时的完整步骤），见 [部署 Runbook](deploy/README.md)。
 
