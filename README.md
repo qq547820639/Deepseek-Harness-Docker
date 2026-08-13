@@ -40,6 +40,11 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3080/   # 200
 - [部署 Runbook（实测验证版）](deploy/README.md) — 镜像构建、本地容器运行时、配置与数据、升级回滚、沙箱兜底、风险清单。
 - 端到端验证（无需真实 API Key）：`./deploy/verify/verify.sh`
 
+## 许可
+
+本仓库部署配置（`deploy/`、`README.md`、`.gitignore`）以 [MIT License](LICENSE) 发布；
+`repo/` 内上游源码沿用其原有 MIT 许可（Copyright (c) 2026 DeepSeek）。
+
 ## 本地运行产物
 
 `.workbuddy/`、`.verify-data/`、`.cache/` 等本机运行产物不入库（见 `.gitignore`）。
