@@ -107,8 +107,8 @@ docker inspect --format '{{.State.Health.Status}}' dsh                   # healt
 ## 5. 配置与数据
 
 - **模型**：`/data/settings.yaml`（`llm-pi-ai.providers.*` + `agent-default-model`）；密钥经 `apiKeyEnv` 指向容器环境变量，不落明文（UI 填写的密钥存 `$DSH_HOME/.credentials.yaml`）。
-- **数据目录**：`/data` 为宿主机 bind 挂载（`${DSH_DATA:-/Volumes/Extra/dsh-data}`，可经环境变量改），存放 settings/凭据。**必须放在 DSH_WORKSPACE 之外**（凭据会被 agent 读到）。
-- **上传目录**：工作目录内的 `attachments/` 文件夹 ↔ 容器 `/data/attachments/v1`（UI 上传的附件、宿主机要交给 agent 的文件都放这里，双向直通）。
+- **数据目录**：`/data` 为宿主机 bind 挂载（`${DSH_DATA:-/Volumes/Extra/CodeProj/dsh-data}`，可经环境变量改），存放 settings/凭据（本机单用户部署，按需自定位置）。
+- **上传目录**：即工作目录本身——`${DSH_WORKSPACE}` ↔ 容器 `/data/attachments/v1`。宿主机放进工作目录的文件、UI 上传的附件都在同一处，双向直通。
 - **workspace 建议**：`DSH_WORKSPACE` 可直接指向代码根（如 `/Volumes/Extra/CodeProj`）。bind 挂载是实时视图，其下**新建的项目/目录容器内立即可见**，无需重启。
 - **权限策略**：`permission` 命名空间，预设 workspace-write（沙箱开+审批）与 danger-full-access（沙箱关+自动批准）。
 - **备份**：`tar czf dsh-data.tgz -C /Volumes/Extra/CodeProj/dsh-data .`
